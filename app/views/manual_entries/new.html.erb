@@ -1,0 +1,84 @@
+<% content_for :title, "Sign someone in" %>
+<%= render "shared/nav" %>
+
+<div class="max-w-lg mx-auto px-4 py-10">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Sign someone in</h1>
+    <p class="mt-1 text-slate-500">Enter their name and roll the wheel to their arrival time.</p>
+  </div>
+
+  <%= form_with url: manual_entries_path, method: :post,
+        class: "bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6 sm:p-8 space-y-6" do %>
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1.5">Name</label>
+      <input type="text" name="name" list="people-list" required autocomplete="off"
+             placeholder="Start typing a name…"
+             class="w-full rounded-xl border-0 ring-1 ring-slate-300 px-4 py-3.5 text-lg text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500">
+      <datalist id="people-list">
+        <% @people.each do |person| %>
+          <option value="<%= person.full_name %>">
+        <% end %>
+      </datalist>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Location</label>
+        <select name="location_id" required
+                class="w-full rounded-xl border-0 ring-1 ring-slate-300 px-3 py-3.5 text-base text-slate-900 focus:ring-2 focus:ring-teal-500 bg-white">
+          <% @locations.each do |location| %>
+            <option value="<%= location.id %>"><%= location.name %></option>
+          <% end %>
+        </select>
+      </div>
+      <% all_programs = @locations.flat_map(&:programs).uniq %>
+      <% if all_programs.any? %>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5">Program <span class="font-normal text-slate-400">(optional)</span></label>
+          <select name="program"
+                  class="w-full rounded-xl border-0 ring-1 ring-slate-300 px-3 py-3.5 text-base text-slate-900 focus:ring-2 focus:ring-teal-500 bg-white">
+            <option value="">—</option>
+            <% all_programs.each do |program| %>
+              <option value="<%= program %>"><%= program %></option>
+            <% end %>
+          </select>
+        </div>
+      <% end %>
+    </div>
+
+    <div data-controller="time-wheel" data-time-wheel-default-hour-value="15" data-time-wheel-default-minute-value="0">
+      <input type="hidden" name="time" data-time-wheel-target="field">
+      <div class="flex items-center justify-between mb-1.5">
+        <label class="block text-sm font-semibold text-slate-700">Arrived at</label>
+        <span class="text-sm font-semibold text-teal-700 tabular-nums" data-time-wheel-target="display"></span>
+      </div>
+
+      <div class="relative rounded-2xl ring-1 ring-slate-200 bg-white overflow-hidden">
+        <div class="pointer-events-none absolute inset-x-3 top-1/2 -translate-y-1/2 h-11 rounded-xl bg-teal-500/10 ring-1 ring-teal-500/30"></div>
+        <div class="flex justify-center gap-1 h-[220px] px-4">
+          <div class="w-20 overflow-y-scroll snap-y snap-mandatory no-scrollbar text-slate-900" data-time-wheel-target="hours"></div>
+          <div class="w-20 overflow-y-scroll snap-y snap-mandatory no-scrollbar text-slate-900" data-time-wheel-target="minutes"></div>
+          <div class="w-20 overflow-y-scroll snap-y snap-mandatory no-scrollbar text-slate-900" data-time-wheel-target="meridiem"></div>
+        </div>
+        <div class="pointer-events-none absolute inset-x-0 top-0 h-14 bg-linear-to-b from-white to-transparent"></div>
+        <div class="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-linear-to-t from-white to-transparent"></div>
+      </div>
+      <p class="mt-1.5 text-xs text-slate-400">Defaults to 3:00 PM — around school pick-up.</p>
+    </div>
+
+    <div data-controller="signature-pad">
+      <div class="flex items-center justify-between mb-1.5">
+        <label class="block text-sm font-semibold text-slate-700">Signature <span class="font-normal text-slate-400">(optional)</span></label>
+        <button type="button" data-action="signature-pad#clear" class="text-xs font-semibold text-teal-600 hover:text-teal-800">Clear</button>
+      </div>
+      <%= hidden_field_tag :signature, "", data: { signature_pad_target: "field" } %>
+      <div class="relative rounded-2xl ring-1 ring-slate-200 bg-white" style="height: 140px;">
+        <p data-signature-pad-target="placeholder" class="absolute inset-0 flex items-center justify-center text-slate-300 text-sm pointer-events-none select-none">✍️ Sign here if they're at the keyboard</p>
+        <canvas data-signature-pad-target="canvas" class="absolute inset-0 w-full h-full rounded-2xl touch-none"></canvas>
+      </div>
+    </div>
+
+    <%= submit_tag "Sign in", class: "w-full rounded-xl bg-teal-600 px-4 py-4 text-lg font-bold text-white hover:bg-teal-500 transition cursor-pointer shadow-sm" %>
+  <% end %>
+</div>

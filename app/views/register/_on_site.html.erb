@@ -1,0 +1,29 @@
+<% open_visits = organisation.visits.open_now.includes(:location).order(:signed_in_at) %>
+<div id="on_site" class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-5">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+      <span class="relative flex size-2.5">
+        <span class="absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75 <%= 'animate-ping' if open_visits.any? %>"></span>
+        <span class="relative inline-flex size-2.5 rounded-full <%= open_visits.any? ? 'bg-teal-500' : 'bg-slate-300' %>"></span>
+      </span>
+      On site now
+    </h2>
+    <span class="text-2xl font-black tabular-nums <%= open_visits.any? ? 'text-teal-600' : 'text-slate-300' %>"><%= open_visits.count %></span>
+  </div>
+
+  <% if open_visits.any? %>
+    <div class="flex flex-wrap gap-2">
+      <% open_visits.each do |visit| %>
+        <div class="inline-flex items-center gap-2.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-1.5 pr-4 py-1.5">
+          <%= avatar(visit.person_name, size: "size-8 text-[10px]") %>
+          <div class="leading-tight">
+            <p class="text-sm font-semibold text-slate-900"><%= visit.person_name %></p>
+            <p class="text-[11px] text-slate-500"><%= visit.location.name %> · since <%= visit.signed_in_at.strftime("%-l:%M %p") %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-sm text-slate-400">Nobody signed in right now.</p>
+  <% end %>
+</div>

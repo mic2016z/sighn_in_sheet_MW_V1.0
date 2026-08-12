@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ruby -v)",
+      "Bash(rails -v)",
+      "Bash(sqlite3 --version)"
+    ]
+  }
+}

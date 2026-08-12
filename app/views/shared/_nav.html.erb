@@ -1,0 +1,28 @@
+<header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
+    <%= link_to register_path, class: "flex items-center gap-2.5 shrink-0" do %>
+      <span class="size-8 rounded-lg bg-teal-500 flex items-center justify-center font-black text-slate-900 text-sm">SB</span>
+      <span class="font-bold tracking-tight hidden sm:block">Sign-In Board</span>
+    <% end %>
+
+    <nav class="flex items-center gap-1 text-sm font-medium overflow-x-auto no-scrollbar">
+      <% {
+        "Sign-in sheet" => register_path,
+        "Hours" => hours_path,
+        "Locations" => locations_path,
+        "People" => people_path
+      }.each do |label, path| %>
+        <% active = current_page?(path) %>
+        <%= link_to label, path,
+              class: "px-3 py-1.5 rounded-lg whitespace-nowrap transition #{active ? 'bg-white/10 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}" %>
+      <% end %>
+    </nav>
+
+    <div class="ml-auto">
+      <%= link_to new_manual_entry_path,
+            class: "inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-3.5 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400 transition shadow-sm whitespace-nowrap" do %>
+        <span class="text-base leading-none">+</span> Sign someone in
+      <% end %>
+    </div>
+  </div>
+</header>

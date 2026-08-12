@@ -1,0 +1,92 @@
+<% content_for :title, "Hours report" %>
+<%= render "shared/nav" %>
+
+<div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Hours report</h1>
+    <p class="text-sm text-slate-500">Totals by person — ready for grant acquittals and the annual report</p>
+  </div>
+
+  <%= form_with url: hours_path, method: :get, class: "bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-5 flex flex-wrap items-end gap-4" do %>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5">From</label>
+      <input type="date" name="from" value="<%= @from.iso8601 %>" class="rounded-xl ring-1 ring-slate-200 border-0 px-3 py-2.5 text-sm bg-white text-slate-700 font-medium">
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5">To</label>
+      <input type="date" name="to" value="<%= @to.iso8601 %>" class="rounded-xl ring-1 ring-slate-200 border-0 px-3 py-2.5 text-sm bg-white text-slate-700 font-medium">
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5">Location</label>
+      <select name="location_id" class="rounded-xl ring-1 ring-slate-200 border-0 px-3 py-2.5 text-sm bg-white text-slate-700 font-medium">
+        <option value="">All locations</option>
+        <% @locations.each do |location| %>
+          <option value="<%= location.id %>" <%= "selected" if @location == location %>><%= location.name %></option>
+        <% end %>
+      </select>
+    </div>
+    <%= submit_tag "Update", class: "rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-500 transition cursor-pointer" %>
+    <%= link_to "Export CSV", export_hours_path(from: @from, to: @to, location_id: @location&.id),
+          class: "rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition" %>
+  <% end %>
+
+  <% total_hours = @by_person.sum { |_, d| d[:total_hours] } %>
+  <% total_sessions = @by_person.sum { |_, d| d[:session_count] } %>
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-5">
+      <p class="text-xs font-bold uppercase tracking-wide text-slate-400">People</p>
+      <p class="text-3xl font-black text-slate-900 tabular-nums mt-1"><%= @by_person.size %></p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-5">
+      <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Sessions</p>
+      <p class="text-3xl font-black text-slate-900 tabular-nums mt-1"><%= total_sessions %></p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-teal-500/20 p-5">
+      <p class="text-xs font-bold uppercase tracking-wide text-teal-600">Total hours</p>
+      <p class="text-3xl font-black text-teal-700 tabular-nums mt-1"><%= number_with_precision(total_hours, precision: 1) %></p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 divide-y divide-slate-100 overflow-hidden">
+    <% if @by_person.empty? %>
+      <div class="px-4 py-16 text-center">
+        <p class="text-4xl mb-2">📊</p>
+        <p class="text-slate-400 font-medium">No sign-ins in this date range.</p>
+      </div>
+    <% end %>
+    <% @by_person.each do |name, data| %>
+      <details class="group">
+        <summary class="cursor-pointer list-none px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition">
+          <span class="flex items-center gap-3 font-semibold text-slate-900">
+            <%= avatar(name) %>
+            <%= name %>
+            <% if data[:any_auto_closed] %>
+              <span class="rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 uppercase" title="Includes auto-closed sessions — check the times">auto-closed</span>
+            <% end %>
+          </span>
+          <span class="flex items-center gap-4">
+            <span class="text-sm text-slate-400"><%= data[:session_count] %> <%= "visit".pluralize(data[:session_count]) %></span>
+            <span class="text-base font-bold text-slate-900 tabular-nums w-16 text-right"><%= data[:total_hours] %>h</span>
+            <span class="text-slate-300 group-open:rotate-180 transition-transform">▾</span>
+          </span>
+        </summary>
+        <div class="px-5 pb-4 pt-1 bg-slate-50/50">
+          <table class="w-full text-xs">
+            <tbody class="divide-y divide-slate-100">
+              <% data[:visits].each do |visit| %>
+                <tr class="<%= 'text-amber-700' if visit.auto_closed? %> text-slate-500">
+                  <td class="py-2 pr-4 tabular-nums"><%= visit.signed_in_at.strftime("%a %-d %b") %></td>
+                  <td class="py-2 pr-4 tabular-nums"><%= visit.signed_in_at.strftime("%-l:%M %p") %> – <%= visit.signed_out_at&.strftime("%-l:%M %p") || "still here" %></td>
+                  <td class="py-2 pr-4"><%= visit.location.name %></td>
+                  <td class="py-2 pr-4"><%= visit.program.presence || "—" %></td>
+                  <td class="py-2 text-right tabular-nums font-semibold"><%= visit.duration_hours %>h<%= " · auto" if visit.auto_closed? %></td>
+                  <td class="py-2 pl-3 text-right"><%= link_to "Edit", edit_visit_path(visit), class: "text-teal-600 hover:text-teal-800 font-semibold" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    <% end %>
+  </div>
+</div>

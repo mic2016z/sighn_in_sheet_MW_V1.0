@@ -1,0 +1,13 @@
+<% content_for :title, "Bulk add people" %>
+<%= render "shared/nav" %>
+
+<div class="max-w-md mx-auto px-4 py-10">
+  <h1 class="text-2xl font-bold tracking-tight text-slate-900 mb-1">Bulk add people</h1>
+  <p class="text-sm text-slate-500 mb-6">One name per line — so the tap list isn't empty on day one.</p>
+
+  <%= form_with url: people_path, method: :post, class: "bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6 space-y-5" do %>
+    <textarea name="names" rows="10" required placeholder="Alex Nguyen&#10;Priya Patel&#10;Sam Taylor"
+              class="w-full rounded-xl border-0 ring-1 ring-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 font-mono text-sm"></textarea>
+    <%= submit_tag "Add people", class: "w-full rounded-xl bg-teal-600 px-4 py-3.5 font-bold text-white hover:bg-teal-500 transition cursor-pointer" %>
+  <% end %>
+</div>

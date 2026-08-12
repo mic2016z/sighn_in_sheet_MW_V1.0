@@ -1,0 +1,24 @@
+<% content_for :title, "Poster — #{@location.name}" %>
+
+<div class="max-w-md mx-auto px-4 py-8 print:max-w-none print:px-0 print:py-0">
+  <div class="mb-5 print:hidden flex justify-between items-center">
+    <%= link_to "← Locations", locations_path, class: "text-sm font-semibold text-slate-500 hover:text-slate-700" %>
+    <button onclick="window.print()" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition cursor-pointer">Print poster</button>
+  </div>
+
+  <div class="bg-white border-8 border-slate-900 rounded-3xl p-10 text-center shadow-xl print:border-0 print:rounded-none print:p-0 print:shadow-none print:h-screen print:flex print:flex-col print:justify-center">
+    <p class="text-4xl font-black tracking-tight text-slate-900">Scan to<br>sign in</p>
+    <div class="my-8 flex justify-center">
+      <%= @qr_svg.html_safe %>
+    </div>
+    <p class="text-3xl font-bold text-slate-900"><%= @location.name %></p>
+    <p class="mt-6 text-sm text-slate-400 font-medium">Or type: <%= sign_in_location_url(@location.slug) %></p>
+  </div>
+</div>
+
+<style>
+  @media print {
+    @page { size: A4; margin: 1.5cm; }
+    body { background: white !important; }
+  }
+</style>

@@ -1,0 +1,66 @@
+<% content_for :title, @location.name %>
+
+<div class="min-h-screen bg-slate-900">
+  <div class="max-w-md mx-auto px-5 py-8 flex flex-col gap-7">
+    <header class="text-center text-white">
+      <span class="inline-flex size-12 rounded-2xl bg-teal-500 items-center justify-center font-black text-slate-900 text-lg mb-3">SB</span>
+      <p class="text-xs uppercase tracking-[0.2em] text-teal-300 font-bold">Sign in at</p>
+      <h1 class="text-4xl font-black tracking-tight mt-1"><%= @location.name %></h1>
+    </header>
+
+    <% if @recent_people.any? %>
+      <section>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tap your name</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <% @recent_people.each do |person| %>
+            <% open_visit = @open_visit_by_person_id[person.id] %>
+            <%= button_to visits_path(slug: @location.slug), params: { person_id: person.id }, method: :post,
+                  form: { data: { turbo: false } },
+                  class: "w-full text-left p-4 rounded-2xl font-semibold shadow-lg active:scale-[0.97] transition #{open_visit ? 'bg-amber-400 text-amber-950' : 'bg-white text-slate-900'}" do %>
+              <span class="flex items-center gap-2.5">
+                <%= avatar(person.full_name, size: "size-9 text-xs") %>
+                <span class="min-w-0">
+                  <span class="block truncate text-base leading-tight"><%= person.full_name %></span>
+                  <span class="block text-[11px] font-medium leading-tight mt-0.5 <%= open_visit ? 'text-amber-800' : 'text-slate-400' %>">
+                    <%= open_visit ? "Here since #{open_visit.signed_in_at.strftime('%-l:%M %p')} — tap to leave" : "Tap to sign in" %>
+                  </span>
+                </span>
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+
+    <section class="bg-white/5 rounded-2xl p-5 ring-1 ring-white/10">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3"><%= @recent_people.any? ? "Not on the list?" : "Type your name" %></h2>
+      <%= form_with url: visits_path(slug: @location.slug), method: :post, data: { turbo: false }, class: "space-y-3" do %>
+        <input type="text" name="name" list="people-list" placeholder="Your full name" required autocomplete="off"
+               class="w-full rounded-2xl border-0 bg-white px-5 py-4 text-lg text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-teal-400">
+        <datalist id="people-list">
+          <% @location.organisation.people.active.order(:full_name).each do |person| %>
+            <option value="<%= person.full_name %>">
+          <% end %>
+        </datalist>
+
+        <% if @location.multiple_programs? %>
+          <select name="program"
+                  class="w-full rounded-2xl border-0 bg-white px-4 py-4 text-lg text-slate-900 focus:ring-4 focus:ring-teal-400">
+            <option value="">What are you here for? (optional)</option>
+            <% @location.programs.each do |program| %>
+              <option value="<%= program %>"><%= program %></option>
+            <% end %>
+          </select>
+        <% elsif @location.programs.one? %>
+          <%= hidden_field_tag :program, @location.programs.first %>
+        <% end %>
+
+        <%= submit_tag "Sign in · Sign out", class: "w-full rounded-2xl bg-teal-500 px-4 py-5 text-xl font-black text-slate-900 hover:bg-teal-400 active:scale-[0.98] transition cursor-pointer shadow-lg" %>
+      <% end %>
+    </section>
+
+    <footer class="text-center">
+      <%= link_to "Staff: open the sign-in sheet →", register_path, class: "text-xs text-slate-500 hover:text-slate-300 transition" %>
+    </footer>
+  </div>
+</div>

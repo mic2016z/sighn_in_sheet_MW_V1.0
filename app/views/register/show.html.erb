@@ -1,0 +1,133 @@
+<% content_for :title, "Sign-in sheet" %>
+<%= turbo_stream_from [ @organisation, :register ] %>
+<%= render "shared/nav" %>
+
+<div class="max-w-6xl mx-auto px-4 py-8 space-y-6">
+  <div class="flex items-end justify-between flex-wrap gap-3">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900"><%= @organisation.name %></h1>
+      <p class="text-sm text-slate-500">Daily sign-in sheet · flip through days like pages of the register</p>
+    </div>
+  </div>
+
+  <%= render "on_site", organisation: @organisation %>
+
+  <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 overflow-hidden">
+    <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 flex-wrap bg-slate-50/50">
+      <div class="flex items-center gap-2">
+        <%= link_to "←", register_path(date: @prev_date, location_id: @location&.id),
+              class: "size-10 flex items-center justify-center rounded-xl ring-1 ring-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-600 transition", title: "Previous day" %>
+        <%= form_with url: register_path, method: :get, class: "inline" do %>
+          <%= hidden_field_tag :location_id, @location&.id if @location %>
+          <input type="date" name="date" value="<%= @date.iso8601 %>" onchange="this.form.requestSubmit()"
+                 class="rounded-xl ring-1 ring-slate-200 border-0 px-3 py-2.5 text-sm bg-white text-slate-700 font-medium">
+        <% end %>
+        <%= link_to "→", register_path(date: @next_date, location_id: @location&.id),
+              class: "size-10 flex items-center justify-center rounded-xl ring-1 ring-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-600 transition", title: "Next day" %>
+        <div class="ml-2">
+          <p class="text-sm font-bold text-slate-900"><%= @date.strftime("%A") %></p>
+          <p class="text-xs text-slate-500"><%= @date.strftime("%-d %B %Y") %></p>
+        </div>
+        <% if @date == Time.current.in_time_zone(@organisation.timezone).to_date %>
+          <span class="ml-1 rounded-full bg-teal-100 text-teal-800 text-[11px] font-bold px-2.5 py-1 uppercase tracking-wide">Today</span>
+        <% end %>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <%= form_with url: register_path, method: :get, class: "inline" do %>
+          <%= hidden_field_tag :date, @date.iso8601 %>
+          <select name="location_id" onchange="this.form.requestSubmit()"
+                  class="rounded-xl ring-1 ring-slate-200 border-0 px-3 py-2.5 text-sm bg-white text-slate-700 font-medium">
+            <option value="">All locations</option>
+            <% @locations.each do |location| %>
+              <option value="<%= location.id %>" <%= "selected" if @location == location %>><%= location.name %></option>
+            <% end %>
+          </select>
+        <% end %>
+        <%= link_to "PDF", register_pdf_path(date: @date, location_id: @location&.id),
+              target: "_blank", rel: "noopener",
+              class: "rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 bg-white hover:bg-slate-50 transition" %>
+        <%= link_to "Export CSV", export_register_path(date: @date, location_id: @location&.id),
+              class: "rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition" %>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
+            <th class="text-left px-4 py-3 font-semibold">Name</th>
+            <th class="text-left px-4 py-3 font-semibold">In</th>
+            <th class="text-left px-4 py-3 font-semibold">Out</th>
+            <th class="text-left px-4 py-3 font-semibold">Location</th>
+            <th class="text-left px-4 py-3 font-semibold">Program</th>
+            <th class="text-center px-4 py-3 font-semibold">Signed</th>
+            <th class="text-right px-4 py-3 font-semibold">Hours</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% if @visits.none? %>
+            <tr>
+              <td colspan="8" class="px-4 py-16 text-center">
+                <p class="text-4xl mb-2">📋</p>
+                <p class="text-slate-400 font-medium">Nothing on this page of the sheet.</p>
+                <p class="text-slate-300 text-xs mt-1">Use the arrows to flip to another day.</p>
+              </td>
+            </tr>
+          <% end %>
+          <% @visits.each do |visit| %>
+            <tr class="hover:bg-slate-50/70 transition <%= 'bg-amber-50/60' if visit.auto_closed? %>">
+              <td class="px-4 py-3">
+                <span class="flex items-center gap-2.5 font-semibold text-slate-900">
+                  <%= avatar(visit.person_name) %><%= visit.person_name %>
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap tabular-nums text-slate-600"><%= visit.signed_in_at.strftime("%-l:%M %p") %></td>
+              <td class="px-4 py-3 whitespace-nowrap tabular-nums text-slate-600">
+                <% if visit.signed_out_at %>
+                  <%= visit.signed_out_at.strftime("%-l:%M %p") %>
+                  <% if visit.auto_closed? %>
+                    <span class="ml-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 uppercase" title="Nobody signed out — closed automatically">auto</span>
+                  <% end %>
+                <% else %>
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-teal-100 text-teal-800 text-xs font-bold px-2.5 py-1">
+                    <span class="size-1.5 rounded-full bg-teal-500 animate-pulse"></span> here
+                  </span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-slate-500"><%= visit.location.name %></td>
+              <td class="px-4 py-3 text-slate-500"><%= visit.program.presence || "—" %></td>
+              <td class="px-4 py-3 text-center">
+                <% if visit.signed? %>
+                  <img src="<%= visit.signature_data %>" alt="signature" class="inline-block h-6 max-w-[70px] object-contain">
+                <% else %>
+                  <span class="text-slate-300">—</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-right tabular-nums font-semibold text-slate-700"><%= number_with_precision(visit.duration_hours, precision: 1) %></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end gap-1.5">
+                  <% if visit.open? %>
+                    <%= button_to "Sign out", sign_out_visit_path(visit), method: :post, form_class: "contents",
+                          class: "rounded-lg px-2.5 py-1.5 text-xs font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-50 transition cursor-pointer whitespace-nowrap" %>
+                  <% end %>
+                  <%= link_to "Edit", edit_visit_path(visit), class: "rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50 transition" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <% if @visits.any? %>
+          <tfoot>
+            <tr class="border-t border-slate-200 bg-slate-50/50">
+              <td class="px-4 py-3 font-bold text-slate-700" colspan="6"><%= pluralize(@visits.size, "sign-in") %></td>
+              <td class="px-4 py-3 text-right font-bold text-slate-900 tabular-nums"><%= number_with_precision(@visits.sum(&:duration_hours), precision: 1) %></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        <% end %>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,44 @@
+<% content_for :title, "Edit entry" %>
+<%= render "shared/nav" %>
+
+<div class="max-w-md mx-auto px-4 py-10">
+  <div class="mb-6 flex items-center gap-3">
+    <%= avatar(@visit.person_name, size: "size-11 text-sm") %>
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900"><%= @visit.person_name %></h1>
+      <p class="text-sm text-slate-500"><%= @visit.location.name %> · <%= @visit.signed_in_at.strftime("%A, %-d %B %Y") %></p>
+    </div>
+  </div>
+
+  <%= form_with model: @visit, class: "bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6 space-y-5" do |f| %>
+    <% if @visit.errors.any? %>
+      <p class="text-sm text-rose-600"><%= @visit.errors.full_messages.to_sentence %></p>
+    <% end %>
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1.5">Signed in</label>
+      <%= f.datetime_local_field :signed_in_at, required: true,
+            class: "w-full rounded-xl border-0 ring-1 ring-slate-300 px-3 py-3 text-slate-900 focus:ring-2 focus:ring-teal-500" %>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1.5">Signed out <span class="font-normal text-slate-400">(blank = still here)</span></label>
+      <%= f.datetime_local_field :signed_out_at,
+            class: "w-full rounded-xl border-0 ring-1 ring-slate-300 px-3 py-3 text-slate-900 focus:ring-2 focus:ring-teal-500" %>
+      <% if @visit.auto_closed? %>
+        <p class="mt-1.5 text-xs text-amber-600 font-medium">⚠ This entry was auto-closed — nobody signed out. Correct the time above.</p>
+      <% end %>
+    </div>
+
+    <div class="flex items-center gap-3 pt-1">
+      <%= f.submit "Save changes", class: "flex-1 rounded-xl bg-teal-600 px-4 py-3 font-bold text-white hover:bg-teal-500 transition cursor-pointer" %>
+      <%= button_to "Delete", visit_path(@visit), method: :delete,
+            form: { data: { turbo_confirm: "Remove this entry from the sheet?" } },
+            class: "rounded-xl px-4 py-3 font-semibold text-rose-600 ring-1 ring-rose-200 hover:bg-rose-50 transition cursor-pointer" %>
+    </div>
+  <% end %>
+
+  <p class="mt-4 text-center">
+    <%= link_to "← Back to sheet", register_path(date: @visit.signed_in_at.to_date), class: "text-sm text-slate-500 hover:text-slate-700" %>
+  </p>
+</div>
