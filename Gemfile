@@ -65,6 +65,6 @@ gem "rqrcode", "~> 3.2"
 
 gem "csv", "~> 3.3"
 
-gem "prawn", "~> 2.4"
+gem "prawn", "~> 2.5"
 
 gem "matrix", "~> 0.4.3"
